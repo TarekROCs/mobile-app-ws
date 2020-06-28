@@ -8,8 +8,7 @@ import roc.tarek.mobileappws.exceptions.UserServiceException;
 import roc.tarek.mobileappws.service.UserService;
 import roc.tarek.mobileappws.shared.dto.UserDto;
 import roc.tarek.mobileappws.ui.model.request.UserDetailsRequestModel;
-import roc.tarek.mobileappws.ui.model.response.ErrorMessages;
-import roc.tarek.mobileappws.ui.model.response.UserRest;
+import roc.tarek.mobileappws.ui.model.response.*;
 
 import java.awt.*;
 
@@ -50,7 +49,7 @@ public class UserController {
     public UserRest updateUser(@PathVariable String userId, @RequestBody UserDetailsRequestModel userDetails) throws Exception {
         UserRest returnValue = new UserRest();
 
-        if(!userId.isEmpty()) throw new Exception("hello, I'm your exception");
+        if(!userId.isEmpty()) throw new UserServiceException("hello, I'm your userServiceException");
 
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userDetails, userDto);
@@ -61,8 +60,21 @@ public class UserController {
         return returnValue;
     }
 
-    @DeleteMapping
-    public String deleteUser() {
-        return "deleteUser() method response";
+    @DeleteMapping(path = "/{userId}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusModel deleteUser(@PathVariable String userId) {
+        OperationStatusModel returnValue = new OperationStatusModel();
+
+        returnValue.setOperationName(RequestOperationName.DELETE.name());
+
+        // if failed
+        returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+
+
+        userService.deleteUser(userId);
+
+        // if success
+        returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+
+        return returnValue;
     }
 }
