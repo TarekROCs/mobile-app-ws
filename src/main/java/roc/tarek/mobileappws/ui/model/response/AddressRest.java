@@ -1,46 +1,12 @@
-package roc.tarek.mobileappws.io.entity;
+package roc.tarek.mobileappws.ui.model.response;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Entity(name = "addresses")
-public class AddressEntity implements Serializable {
-
-    private static final long serialVersionUID = 8988709877955563275L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
-
-    @Column(length = 30, nullable = false)
+public class AddressRest {
     private String addressId;
-
-    @Column(length = 15, nullable = false)
     private String city;
-
-    @Column(length = 15, nullable = false)
     private String country;
-
-    @Column(length = 100, nullable = false)
     private String streetName;
-
-    @Column(length = 7, nullable = false)
     private String postalCode;
-
-    @Column(length = 10, nullable = false)
     private String type;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private UserEntity userEntity;
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
 
     public String getAddressId() {
         return addressId;
@@ -88,13 +54,5 @@ public class AddressEntity implements Serializable {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public UserEntity getUserEntity() {
-        return userEntity;
-    }
-
-    public void setUserEntity(UserEntity userEntity) {
-        this.userEntity = userEntity;
     }
 }
