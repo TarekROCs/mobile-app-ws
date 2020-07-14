@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import roc.tarek.mobileappws.exceptions.UserServiceException;
 import roc.tarek.mobileappws.io.entity.AddressEntity;
+import roc.tarek.mobileappws.io.repositories.AddressRepository;
 import roc.tarek.mobileappws.io.repositories.UserRepository;
 import roc.tarek.mobileappws.io.entity.UserEntity;
 import roc.tarek.mobileappws.service.UserService;
@@ -27,12 +28,16 @@ import roc.tarek.mobileappws.ui.model.response.ErrorMessages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    AddressRepository addressRepository;
 
     @Autowired
     Utils utils;
@@ -48,25 +53,26 @@ public class UserServiceImpl implements UserService {
         for(int i = 0; i < user.getAddresses().size(); i++){
             AddressDto addressDto = user.getAddresses().get(i);
             addressDto.setAddressId(utils.generateAddressId(30));
+            addressDto.setUserDetails(user);
             user.getAddresses().set(i, addressDto);
         }
 
         ModelMapper modelMapper = new ModelMapper();
-
-        //modelMapper.addMappings(UserDto::getAddresses, UserEntity::setAddresses);
-       UserEntity userEntity = modelMapper.map(user, UserEntity.class);
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId(30);
         userEntity.setUserId(publicUserId);
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+
+        for(int i =0; i<userEntity.getAddresses().size(); i++){
+            userEntity.getAddresses().get(i).setUserEntity(userEntity);
+        }
 
         UserEntity userStoredDetails = userRepository.save(userEntity);
 
         UserDto returnValue = modelMapper.map(userStoredDetails, UserDto.class);
 
         return returnValue;
-
-
 
     }
 
@@ -136,6 +142,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<AddressDto> getUserAddresses(String userId) {
+
+        List<AddressDto> returnValue = new ArrayList<>();
+        ModelMapper modelMapper = new ModelMapper();
+
+        UserEntity user = userRepository.findByUserId(userId);
+        if(user == null) return returnValue;
+
+        Iterable<AddressEntity> userAddresses = addressRepository.findAllByUserEntity(user);
+
+
+        for(AddressEntity addressEntity : userAddresses){
+            returnValue.add(modelMapper.map(addressEntity, AddressDto.class));
+        }
+
+        return returnValue;
+    }
+
+    @Override
+    public AddressDto getAddress(String addressId) throws Exception {
+        AddressEntity addressEntity = addressRepository.findByAddressId(addressId);
+
+        if(addressEntity == null) throw new Exception("address not found exception");
+
+        ModelMapper modelMapper = new ModelMapper();
+        AddressDto returnValue = modelMapper.map(addressEntity, AddressDto.class);
+        return returnValue;
+    }
+
+    @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(email);
 
@@ -143,4 +179,7 @@ public class UserServiceImpl implements UserService {
 
         return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
     }
+
+
+
 }
